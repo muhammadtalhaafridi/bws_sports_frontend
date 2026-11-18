@@ -1,13 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { CheckCircle2, ChevronLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { cancelOrder } from "../api/order/fetcher";
+import { orderKeys, useOrder } from "../api/order/queries";
 import { ProductImage } from "../components/ProductImage";
 import { EmptyState, ErrorState, Spinner, StatusBadge } from "../components/ui";
-import { api, getErrorMessage } from "../lib/api";
+import { getErrorMessage } from "../lib/api";
 import { formatDateTime, formatPrice, orderNumber } from "../lib/format";
-import type { Order } from "../lib/types";
 
 const steps = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"] as const;
 
@@ -18,17 +19,13 @@ export function OrderDetails() {
   const placed = params.get("placed") === "1";
   const queryClient = useQueryClient();
 
-  const { data: order, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["orders", id],
-    queryFn: async () => (await api.get<{ order: Order }>(`/orders/${id}`)).data.order,
-    retry: false,
-  });
+  const { data: order, isLoading, isError, error, refetch } = useOrder(id);
 
   const cancel = useMutation({
-    mutationFn: async () => (await api.patch<{ order: Order }>(`/orders/${id}/cancel`)).data.order,
+    mutationFn: () => cancelOrder(id!),
     onSuccess: (updated) => {
-      queryClient.setQueryData(["orders", id], updated);
-      queryClient.invalidateQueries({ queryKey: ["orders", "mine"] });
+      queryClient.setQueryData(orderKeys.detail(id!), updated);
+      queryClient.invalidateQueries({ queryKey: orderKeys.mine });
       toast.success("Order cancelled");
     },
     onError: (err) => toast.error(getErrorMessage(err)),

@@ -1,21 +1,13 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useCategories } from "../api/category/queries";
+import type { ProductListParams } from "../api/product/fetcher";
+import { useProducts } from "../api/product/queries";
 import { ProductGrid } from "../components/ProductCard";
 import { EmptyState, ErrorState, Pager, Spinner } from "../components/ui";
-import { useCategories } from "../hooks/useCategories";
-import { api, getErrorMessage } from "../lib/api";
+import { getErrorMessage } from "../lib/api";
 import { formatPrice } from "../lib/format";
-import type { Pagination, Product } from "../lib/types";
-
-const sorts = [
-  { value: "newest", label: "Newest" },
-  { value: "popular", label: "Most popular" },
-  { value: "price_asc", label: "Price: low to high" },
-  { value: "price_desc", label: "Price: high to low" },
-  { value: "name", label: "Name A-Z" },
-];
 
 export function Products() {
   const [params, setParams] = useSearchParams();
@@ -58,15 +50,13 @@ export function Products() {
     return () => clearTimeout(timer);
   }, [searchText, search, params, setParams]);
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["products", { search, category, sort, page, maxPrice }],
-    queryFn: async () =>
-      (
-        await api.get<{ products: Product[]; pagination: Pagination }>("/products", {
-          params: { search: search || undefined, category: category || undefined, maxPrice: maxPrice || undefined, sort, page, limit: 12 },
-        })
-      ).data,
-    placeholderData: keepPreviousData,
+  const { data, isLoading, isError, error, refetch, isFetching } = useProducts({
+    search,
+    category,
+    maxPrice,
+    sort: sort as ProductListParams["sort"],
+    page,
+    limit: 12,
   });
 
   const activeCategory = categories?.find((c) => String(c.id) === category);
@@ -98,17 +88,6 @@ export function Products() {
             {categories?.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="select-wrap">
-          <span>Sort:</span>
-          <select value={sort} onChange={(e) => update({ sort: e.target.value === "newest" ? "" : e.target.value })}>
-            {sorts.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
               </option>
             ))}
           </select>

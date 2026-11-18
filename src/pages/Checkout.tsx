@@ -6,14 +6,16 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { createOrder } from "../api/order/fetcher";
+import { orderKeys } from "../api/order/queries";
+import { productKeys } from "../api/product/queries";
 import { ProductImage } from "../components/ProductImage";
 import { FieldError, PageHeader } from "../components/ui";
 import { useAuth } from "../hooks/useAuth";
 import { useCart } from "../hooks/useCart";
-import { api, getErrorMessage } from "../lib/api";
+import { getErrorMessage } from "../lib/api";
 import { formatPrice } from "../lib/format";
 import { phoneField } from "../lib/schemas";
-import type { Order } from "../lib/types";
 
 const schema = z.object({
   phone: phoneField,
@@ -40,19 +42,14 @@ export function Checkout() {
   });
 
   const placeOrder = useMutation({
-    mutationFn: async (values: FormValues) =>
-      (
-        await api.post<{ order: Order }>("/orders", {
-          ...values,
-          items: items.map((i) => ({ productId: i.id, quantity: i.quantity })),
-        })
-      ).data.order,
+    mutationFn: (values: FormValues) =>
+      createOrder({ ...values, items: items.map((i) => ({ productId: i.id, quantity: i.quantity })) }),
     onSuccess: (order) => {
       setPlaced(true);
       clear();
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["product"] });
+      queryClient.invalidateQueries({ queryKey: orderKeys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.details });
       navigate(`/orders/${order.id}?placed=1`, { replace: true });
     },
     onError: (error) => toast.error(getErrorMessage(error, "Could not place your order")),

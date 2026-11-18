@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import type { IconType } from "react-icons";
 import { GiAmericanFootballHelmet, GiCricketBat } from "react-icons/gi";
 import { Link } from "react-router-dom";
-import { useCategories } from "../../hooks/useCategories";
+import { useCategories } from "../../api/category/queries";
 
 const promos: { eyebrow: string; title: string; text: string; cta: string; to: string; category?: string; Icon: IconType; tone: string }[] = [
   {
@@ -12,7 +12,7 @@ const promos: { eyebrow: string; title: string; text: string; cta: string; to: s
     cta: "Shop willow bats",
     to: "/products?search=english%20willow",
     Icon: GiCricketBat,
-    tone: "green",
+    tone: "brand",
   },
   {
     eyebrow: "Protection",
@@ -22,7 +22,7 @@ const promos: { eyebrow: string; title: string; text: string; cta: string; to: s
     to: "/products",
     category: "Protection",
     Icon: GiAmericanFootballHelmet,
-    tone: "navy",
+    tone: "violet",
   },
 ];
 

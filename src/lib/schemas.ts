@@ -7,3 +7,7 @@ export const phoneField = z
   .min(1, "Phone is required")
   .regex(/^\+?[0-9\s-]{7,20}$/, "Enter a valid phone number");
 export const passwordField = z.string().min(6, "Password must be at least 6 characters");
+export const resetCodeField = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, "Enter the 6-digit code from your email");

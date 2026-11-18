@@ -6,15 +6,15 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
+import { registerUser } from "../api/auth/fetcher";
 import { AuthCard } from "../components/AuthCard";
 import { PasswordInput } from "../components/PasswordInput";
 import { FieldError } from "../components/ui";
 import { useAuth } from "../hooks/useAuth";
 import { useObjectUrl } from "../hooks/useObjectUrl";
-import { api, getErrorMessage } from "../lib/api";
+import { getErrorMessage } from "../lib/api";
 import { safeRedirect } from "../lib/redirect";
 import { emailField, passwordField, phoneField } from "../lib/schemas";
-import type { AuthResponse } from "../lib/types";
 
 const schema = z
   .object({
@@ -42,14 +42,7 @@ export function Register() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   const mutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      const form = new FormData();
-      for (const key of ["name", "email", "phone", "password", "address"] as const) {
-        if (values[key]) form.append(key, values[key]);
-      }
-      if (image) form.append("image", image);
-      return (await api.post<AuthResponse>("/auth/register", form)).data;
-    },
+    mutationFn: (values: FormValues) => registerUser({ ...values, image }),
     onSuccess: ({ token, user }) => {
       login(token, user);
       toast.success("Your account has been created");

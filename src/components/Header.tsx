@@ -66,8 +66,11 @@ export function Header() {
 
         <div className="header-actions">
           <Link to="/cart" className="cart-link" aria-label={`Cart, ${count} items`}>
-            <ShoppingCart size={22} />
-            {count > 0 && <span className="cart-count">{count > 99 ? "99+" : count}</span>}
+            <span className="cart-icon">
+              <ShoppingCart size={20} />
+              {count > 0 && <span className="cart-count">{count > 99 ? "99+" : count}</span>}
+            </span>
+            <span>Cart</span>
           </Link>
 
           {user ? (

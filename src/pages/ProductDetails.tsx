@@ -1,15 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useProduct } from "../api/product/queries";
 import { ProductGrid } from "../components/ProductCard";
 import { ProductImage } from "../components/ProductImage";
 import { EmptyState, ErrorState, Spinner } from "../components/ui";
 import { useCart } from "../hooks/useCart";
-import { api, getErrorMessage } from "../lib/api";
+import { getErrorMessage } from "../lib/api";
 import { formatPrice } from "../lib/format";
-import type { Product } from "../lib/types";
 import { AxiosError } from "axios";
 
 export function ProductDetails() {
@@ -18,11 +17,7 @@ export function ProductDetails() {
   const { items, addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
 
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["product", id],
-    queryFn: async () => (await api.get<{ product: Product; related: Product[] }>(`/products/${id}`)).data,
-    retry: (count, err) => !(err instanceof AxiosError && err.response?.status === 404) && count < 2,
-  });
+  const { data, isLoading, isError, error, refetch } = useProduct(id);
 
   // Reset the quantity when moving to another product.
   const [lastId, setLastId] = useState(id);

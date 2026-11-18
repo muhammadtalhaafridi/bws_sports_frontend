@@ -1,17 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMyOrders } from "../api/order/queries";
 import { ProductImage } from "../components/ProductImage";
 import { EmptyState, ErrorState, PageHeader, Spinner, StatusBadge } from "../components/ui";
-import { api, getErrorMessage } from "../lib/api";
+import { getErrorMessage } from "../lib/api";
 import { formatDate, formatPrice, orderNumber } from "../lib/format";
-import type { Order } from "../lib/types";
 
 export function MyOrders() {
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["orders", "mine"],
-    queryFn: async () => (await api.get<{ orders: Order[] }>("/orders/my")).data.orders,
-  });
+  const { data, isLoading, isError, error, refetch } = useMyOrders();
 
   return (
     <>

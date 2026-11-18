@@ -23,7 +23,7 @@ createRoot(document.getElementById("root")!).render(
         <AuthProvider>
           <CartProvider>
             <App />
-            <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>

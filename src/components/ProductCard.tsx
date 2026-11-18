@@ -32,13 +32,13 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="product-card-footer">
           <strong className="price">{formatPrice(product.price)}</strong>
           <button
-            className="btn btn-primary btn-icon"
+            className="btn btn-block add-to-cart"
             onClick={onAdd}
             disabled={outOfStock}
-            aria-label={`Add ${product.name} to cart`}
-            title={outOfStock ? "Out of stock" : "Add to cart"}
+            aria-label={outOfStock ? `${product.name} is out of stock` : `Add ${product.name} to cart`}
           >
             <ShoppingCart size={18} />
+            {outOfStock ? "Out of stock" : "Add to cart"}
           </button>
         </div>
       </div>

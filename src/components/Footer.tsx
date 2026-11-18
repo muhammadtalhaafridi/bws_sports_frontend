@@ -1,8 +1,8 @@
 import { Mail, MapPin, Phone } from "lucide-react";
-import { FaFacebookF, FaInstagram, FaWhatsapp, FaYoutube } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
 import { MdSportsCricket } from "react-icons/md";
 import { Link } from "react-router-dom";
-import { useCategories } from "../hooks/useCategories";
+import { useCategories } from "../api/category/queries";
 
 export function Footer() {
   const { data: categories } = useCategories();
@@ -24,7 +24,6 @@ export function Footer() {
             <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook"><FaFacebookF /></a>
             <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram"><FaInstagram /></a>
             <a href="https://youtube.com" target="_blank" rel="noreferrer" aria-label="YouTube"><FaYoutube /></a>
-            <a href="https://wa.me/923001234567" target="_blank" rel="noreferrer" aria-label="WhatsApp"><FaWhatsapp /></a>
           </div>
         </div>
 
@@ -53,8 +52,8 @@ export function Footer() {
         <div>
           <h4>Contact</h4>
           <ul className="footer-contact">
-            <li><MapPin size={16} /> Main Boulevard, Gulberg III, Lahore</li>
-            <li><Phone size={16} /> +92 300 1234567</li>
+            <li><MapPin size={16} /> BashirAbad, Peshawar</li>
+            <li><Phone size={16} /> <a href="tel:+923336257886">0333 6257886</a></li>
             <li><Mail size={16} /> info@bwssports.com</li>
           </ul>
         </div>

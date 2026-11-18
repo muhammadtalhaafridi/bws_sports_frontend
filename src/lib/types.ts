@@ -15,6 +15,7 @@ export interface User {
 export interface Category {
   id: number;
   name: string;
+  image?: string | null;
   productCount?: number;
 }
 

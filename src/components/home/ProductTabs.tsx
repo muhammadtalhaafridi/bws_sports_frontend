@@ -1,15 +1,13 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { api, getErrorMessage } from "../../lib/api";
-import type { Pagination, Product } from "../../lib/types";
+import { useProducts } from "../../api/product/queries";
+import { getErrorMessage } from "../../lib/api";
 import { ProductGrid } from "../ProductCard";
 import { EmptyState, ErrorState, Spinner } from "../ui";
 
 const tabs = [
   { id: "new", label: "New arrivals", params: { sort: "newest" }, link: "/products" },
-  { id: "popular", label: "Best sellers", params: { sort: "popular" }, link: "/products?sort=popular" },
   { id: "budget", label: "Under Rs 5,000", params: { sort: "price_asc", maxPrice: 5000 }, link: "/products?maxPrice=5000&sort=price_asc" },
 ] as const;
 
@@ -19,12 +17,7 @@ export function ProductTabs() {
   const [active, setActive] = useState<TabId>("new");
   const tab = tabs.find((t) => t.id === active)!;
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ["products", "home-tab", active],
-    queryFn: async () =>
-      (await api.get<{ products: Product[]; pagination: Pagination }>("/products", { params: { ...tab.params, limit: 8 } })).data,
-    placeholderData: keepPreviousData,
-  });
+  const { data, isLoading, isError, error, refetch, isFetching } = useProducts({ ...tab.params, limit: 8 });
 
   return (
     <section className="section section-muted">

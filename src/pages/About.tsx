@@ -1,7 +1,9 @@
 import { BadgeCheck, HeartHandshake, ShieldCheck, Truck } from "lucide-react";
-import { GiCricketBat, GiTennisBall } from "react-icons/gi";
 import { Link } from "react-router-dom";
-import { PageHeader } from "../components/ui";
+// Photos from unsplash.com: club match (1552435053-01c010307582), red ball on grass (1531415074968-036ba1b575da).
+import heroImage from "../assets/about-hero.jpg";
+import storyImage from "../assets/about-story.jpg";
+import { ImageHero } from "../components/ImageHero";
 
 const reasons = [
   { Icon: BadgeCheck, title: "Genuine products", text: "Every bat, ball and pad is checked by our team before it is packed." },
@@ -13,18 +15,25 @@ const reasons = [
 export function About() {
   return (
     <>
-      <PageHeader title="About BWS Sports" subtitle="Cricket gear for every player" />
+      <ImageHero
+        image={heroImage}
+        eyebrow="About us"
+        title="About BWS Sports"
+        subtitle="Cricket gear for every player, chosen by people who love the game."
+      />
       <div className="container section">
         <div className="about-layout">
-          <div className="about-image" aria-hidden>
-            <GiCricketBat className="about-bat" />
-            <GiTennisBall className="about-ball" />
-            <span>Since 2015</span>
+          <div className="about-visual">
+            <img src={storyImage} alt="A red leather cricket ball resting on the grass" className="about-photo" loading="lazy" />
+            <div className="about-badge">
+              <strong>Since 2015</strong>
+              <span>Gear for every player</span>
+            </div>
           </div>
           <div className="about-text">
             <h2>Who we are</h2>
             <p>
-              BWS Sports is a cricket equipment shop started by a group of club cricketers in Lahore. We began by
+              BWS Sports is a cricket equipment shop started by a group of club cricketers in Peshawar. We began by
               supplying bats and balls to local teams, and today we serve players of every level, from kids playing
               tape-ball in the street to club and first-class cricketers.
             </p>

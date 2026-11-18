@@ -5,14 +5,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { updatePassword, updateProfile } from "../api/auth/fetcher";
 import { PasswordInput } from "../components/PasswordInput";
 import { FieldError, PageHeader } from "../components/ui";
 import { useAuth } from "../hooks/useAuth";
 import { useObjectUrl } from "../hooks/useObjectUrl";
-import { api, getErrorMessage } from "../lib/api";
+import { getErrorMessage } from "../lib/api";
 import { formatDate, imageUrl } from "../lib/format";
 import { passwordField, phoneField } from "../lib/schemas";
-import type { User } from "../lib/types";
 
 const profileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters"),
@@ -43,14 +43,7 @@ export function Profile() {
   const passwordForm = useForm<PasswordValues>({ resolver: zodResolver(passwordSchema) });
 
   const saveProfile = useMutation({
-    mutationFn: async (values: ProfileValues) => {
-      const form = new FormData();
-      form.append("name", values.name);
-      form.append("phone", values.phone);
-      form.append("address", values.address ?? "");
-      if (image) form.append("image", image);
-      return (await api.put<{ user: User }>("/auth/me", form)).data.user;
-    },
+    mutationFn: (values: ProfileValues) => updateProfile({ ...values, image }),
     onSuccess: (updated) => {
       setUser(updated);
       setImage(null);
@@ -60,8 +53,7 @@ export function Profile() {
   });
 
   const changePassword = useMutation({
-    mutationFn: async ({ currentPassword, newPassword }: PasswordValues) =>
-      (await api.put<{ message: string }>("/auth/me/password", { currentPassword, newPassword })).data,
+    mutationFn: ({ currentPassword, newPassword }: PasswordValues) => updatePassword({ currentPassword, newPassword }),
     onSuccess: (data) => {
       toast.success(data.message);
       passwordForm.reset();
