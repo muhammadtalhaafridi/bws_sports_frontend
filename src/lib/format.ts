@@ -25,3 +25,20 @@ export const statusLabel: Record<OrderStatus, string> = {
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",
 };
+
+/** "Visa •••• 4242 (exp 12/34)" for card orders, otherwise the payment method name. */
+export function paymentSummary(order: {
+  paymentMethod: string;
+  cardBrand: string | null;
+  cardLast4: string | null;
+  cardExpMonth: number | null;
+  cardExpYear: number | null;
+}) {
+  if (!order.cardLast4) return order.paymentMethod;
+  const brand = order.cardBrand ? order.cardBrand.charAt(0).toUpperCase() + order.cardBrand.slice(1) : "Card";
+  const exp =
+    order.cardExpMonth && order.cardExpYear
+      ? ` (exp ${String(order.cardExpMonth).padStart(2, "0")}/${String(order.cardExpYear).slice(-2)})`
+      : "";
+  return `${brand} •••• ${order.cardLast4}${exp}`;
+}

@@ -59,6 +59,13 @@ export interface Order {
   address: string;
   description: string | null;
   paymentMethod: string;
+  paymentStatus: "UNPAID" | "PAID";
+  cardBrand: string | null;
+  cardLast4: string | null;
+  cardExpMonth: number | null;
+  cardExpYear: number | null;
+  cardholderName: string | null;
+  paidAt: string | null;
   orderDate: string;
   user: { id: number; name: string; email: string; phone: string };
   items: OrderItem[];

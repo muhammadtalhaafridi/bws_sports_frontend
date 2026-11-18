@@ -1,12 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
-import { createOrder } from "../api/order/fetcher";
+import { cancelOrder, createOrder } from "../api/order/fetcher";
 import { orderKeys } from "../api/order/queries";
 import { productKeys } from "../api/product/queries";
 import { ProductImage } from "../components/ProductImage";
@@ -21,6 +21,7 @@ const schema = z.object({
   phone: phoneField,
   address: z.string().trim().min(5, "Please enter your full delivery address"),
   description: z.string().trim().max(1000).optional(),
+  paymentMethod: z.enum(["COD", "CARD"]),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -31,20 +32,45 @@ export function Checkout() {
   const queryClient = useQueryClient();
   // Set once the order is placed so the emptied cart does not bounce us back to /cart.
   const [placed, setPlaced] = useState(false);
+  const [params, setParams] = useSearchParams();
+
+  // Back from Stripe without paying: cancel that unpaid order so its stock is released. The cart is still here.
+  const cancelledId = params.get("cancelled");
+  const handledCancel = useRef(false);
+  useEffect(() => {
+    if (!cancelledId || handledCancel.current) return;
+    handledCancel.current = true;
+    cancelOrder(cancelledId)
+      .catch(() => undefined)
+      .finally(() => {
+        queryClient.invalidateQueries({ queryKey: orderKeys.all });
+        queryClient.invalidateQueries({ queryKey: productKeys.all });
+        toast("Card payment was cancelled. Your cart is still here.");
+        setParams({}, { replace: true });
+      });
+  }, [cancelledId, queryClient, setParams]);
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { phone: user?.phone ?? "", address: user?.address ?? "", description: "" },
+    defaultValues: { phone: user?.phone ?? "", address: user?.address ?? "", description: "", paymentMethod: "CARD" },
   });
+
+  const paymentMethod = useWatch({ control, name: "paymentMethod" });
 
   const placeOrder = useMutation({
     mutationFn: (values: FormValues) =>
       createOrder({ ...values, items: items.map((i) => ({ productId: i.id, quantity: i.quantity })) }),
-    onSuccess: (order) => {
+    onSuccess: ({ order, checkoutUrl }) => {
+      if (checkoutUrl) {
+        // The cart is emptied after Stripe confirms the payment.
+        window.location.href = checkoutUrl;
+        return;
+      }
       setPlaced(true);
       clear();
       queryClient.invalidateQueries({ queryKey: orderKeys.all });
@@ -55,7 +81,7 @@ export function Checkout() {
     onError: (error) => toast.error(getErrorMessage(error, "Could not place your order")),
   });
 
-  if (items.length === 0 && !placed) return <Navigate to="/cart" replace />;
+  if (items.length === 0 && !placed && !cancelledId) return <Navigate to="/cart" replace />;
 
   return (
     <>
@@ -104,12 +130,18 @@ export function Checkout() {
           <div className="payment-box">
             <strong>Payment method</strong>
             <label className="radio">
-              <input type="radio" checked readOnly /> Cash on delivery
+              <input type="radio" value="CARD" {...register("paymentMethod")} /> Credit / debit card (Stripe)
             </label>
+            <label className="radio">
+              <input type="radio" value="COD" {...register("paymentMethod")} /> Cash on delivery
+            </label>
+            <p className="muted small">Card payments are made on the secure Stripe page. We never see your full card number.</p>
           </div>
 
           <button className="btn btn-primary btn-lg btn-block" disabled={placeOrder.isPending}>
-            <Lock size={18} /> {placeOrder.isPending ? "Placing order..." : `Place order · ${formatPrice(total)}`}
+            <Lock size={18} /> {placeOrder.isPending
+              ? "Please wait..."
+              : `${paymentMethod === "CARD" ? "Pay" : "Place order"} · ${formatPrice(total)}`}
           </button>
         </form>
 

@@ -1,14 +1,17 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { CheckCircle2, ChevronLeft } from "lucide-react";
+import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { cancelOrder } from "../api/order/fetcher";
+import { cancelOrder, confirmPayment } from "../api/order/fetcher";
 import { orderKeys, useOrder } from "../api/order/queries";
+import { productKeys } from "../api/product/queries";
 import { ProductImage } from "../components/ProductImage";
+import { useCart } from "../hooks/useCart";
 import { EmptyState, ErrorState, Spinner, StatusBadge } from "../components/ui";
 import { getErrorMessage } from "../lib/api";
-import { formatDateTime, formatPrice, orderNumber } from "../lib/format";
+import { formatDateTime, formatPrice, orderNumber, paymentSummary } from "../lib/format";
 
 const steps = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"] as const;
 
@@ -16,8 +19,30 @@ const steps = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"] as const;
 export function OrderDetails() {
   const { id } = useParams();
   const [params] = useSearchParams();
-  const placed = params.get("placed") === "1";
+  const sessionId = params.get("session_id");
+  const placed = params.get("placed") === "1" || Boolean(sessionId);
   const queryClient = useQueryClient();
+  const { clear } = useCart();
+
+  // Back from Stripe after paying: confirm the payment with the server, then empty the cart.
+  const confirmPay = useMutation({
+    mutationFn: () => confirmPayment(id!),
+    onSuccess: (updated) => {
+      clear();
+      queryClient.setQueryData(orderKeys.detail(id!), updated);
+      queryClient.invalidateQueries({ queryKey: orderKeys.mine });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+    },
+    onError: (err) => toast.error(getErrorMessage(err, "Could not confirm your payment")),
+  });
+  const confirmStarted = useRef(false);
+  const startConfirm = confirmPay.mutate;
+  useEffect(() => {
+    if (sessionId && id && !confirmStarted.current) {
+      confirmStarted.current = true;
+      startConfirm();
+    }
+  }, [sessionId, id, startConfirm]);
 
   const { data: order, isLoading, isError, error, refetch } = useOrder(id);
 
@@ -31,6 +56,7 @@ export function OrderDetails() {
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 
+  if (confirmPay.isPending) return <Spinner label="Confirming your payment..." />;
   if (isLoading) return <Spinner label="Loading order..." />;
   if (isError || !order) {
     const status = error instanceof AxiosError ? error.response?.status : undefined;
@@ -123,7 +149,17 @@ export function OrderDetails() {
           </div>
           <div>
             <h4>Payment</h4>
-            <p>{order.paymentMethod}</p>
+            <p>
+              {paymentSummary(order)}
+              <br />
+              <span className={order.paymentStatus === "PAID" ? "text-success" : "muted"}>
+                {order.paymentStatus === "PAID"
+                  ? "Paid"
+                  : order.paymentMethod === "Cash on delivery"
+                    ? "Pay on delivery"
+                    : "Not paid"}
+              </span>
+            </p>
             {order.description && (
               <>
                 <h4>Notes</h4>
@@ -134,7 +170,7 @@ export function OrderDetails() {
         </div>
 
         <div className="order-actions">
-          {order.status === "PENDING" && (
+          {order.status === "PENDING" && order.paymentStatus !== "PAID" && (
             <button
               className="btn btn-outline danger"
               disabled={cancel.isPending}
